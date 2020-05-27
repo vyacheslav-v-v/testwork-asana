@@ -1,0 +1,85 @@
+version: "3.7"
+
+x-django-containers: &django-containers
+  user: www-data
+  build:
+    context: .
+    dockerfile: compose/django/Dockerfile
+  image: asana/django
+  restart: unless-stopped
+  volumes:
+    - "${MEDIA_VOLUME:-media-volume}:/app/src/media:rw"
+  environment:
+    - DEBUG
+    - LOG_LEVEL
+    - ALLOWED_HOSTS
+  env_file:
+    - .env
+
+services:
+  # Service commands (migrations, updates, etc)
+  service:
+    <<: *django-containers
+    command: /app/start-service.sh
+    container_name: asana-service
+    restart: "on-failure"
+    volumes:
+      - "${MEDIA_VOLUME:-media-volume}:/app/media:rw"
+
+  # Application
+  django:
+    <<: *django-containers
+    command: /app/start-service.sh
+    container_name: asana-django
+    expose:
+      - "3100"
+    depends_on:
+      - service
+      - database
+      - celery-worker
+      - celery-beat
+
+  rabbitmq:
+    image: rabbitmq:3.7-management-alpine
+    container_name: asana-rabbitmq
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_DEFAULT_VHOST=/
+    expose:
+      - "5672"
+#    env_file:
+#      - .env
+
+  celery-worker:
+    <<: *django-containers
+    command: /app/start-celery-worker.sh
+    container_name: asana-celery
+    depends_on:
+      - rabbitmq
+    env_file:
+      - .env
+
+  celery-beat:
+    <<: *django-containers
+    command: /app/start-celery-beat.sh
+    container_name: asana-celery-beat
+    depends_on:
+      - rabbitmq
+
+  database:
+    image: postgres:11.1
+    container_name: asana-database
+    expose:
+        - "5432"
+    env_file:
+      - .env
+
+networks:
+  default:
+    name: asana
+
+volumes:
+  media-volume:
+  pgdata:
