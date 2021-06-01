@@ -9,11 +9,11 @@ class SyncStatusAbstract(models.Model):
     SYNCED = 'synced'
 
     SYNC_STATUSES = (
-        (NEED_SYNC, 'Объект изменён, требуется синхронизация'),
-        (SYNCED, 'Синхронизирован'),
+        (NEED_SYNC, 'Object changed, synchronization required'),
+        (SYNCED, 'Synchronized'),
     )
 
-    sync_status = models.CharField('Статус синхронизации',
+    sync_status = models.CharField('Synchronization status',
                                    default=NEED_SYNC, max_length=11,
                                    choices=SYNC_STATUSES)
 
@@ -21,7 +21,7 @@ class SyncStatusAbstract(models.Model):
                            **nullable)
 
     def change_status(self, status) -> None:
-        """Изменяет статус синхронизации. """
+        """Changes synchronization status."""
         if status != self.sync_status:
             self.__class__.objects.filter(id=self.id).update(status=status)
 
@@ -30,12 +30,12 @@ class SyncStatusAbstract(models.Model):
 
     class Meta:
         abstract = True
-        verbose_name = 'Статус синхронизации'
-        verbose_name_plural = 'Статусы синхронизации'
+        verbose_name = 'Synchronization status'
+        verbose_name_plural = 'Synchronization statuses'
 
 
 class Workspace(SyncStatusAbstract):
-    """ Рабочая область проекта Asana. """
+    """Asana workspace."""
     name = models.CharField('Имя', max_length=255)
 
     def __str__(self):
@@ -47,38 +47,38 @@ class Workspace(SyncStatusAbstract):
 
 
 class AsanaUser(SyncStatusAbstract):
-    """ Пользователи проекта Asana.
+    """Asana user.
 
-    Неизвестно будут ли пользователи Asana и Django пересекаться, поэтому
-    делаем отдельную модель и не делаем ссылочных полей на модель User.
+    It is not known whether Asana and Django users will overlap, so we make
+    a separate model and do not make reference fields to the User model.
     """
-    name = models.CharField('Имя', max_length=255, db_index=True)
+    name = models.CharField('name', max_length=255, db_index=True)
 
     def __str__(self):
-        return f'Пользователь Asana {self.id} {self.name}'
+        return f'Asana user {self.id} {self.name}'
 
     class Meta:
-        verbose_name = 'Пользователь Asana'
-        verbose_name_plural = 'Пользователи Asana'
+        verbose_name = 'Asana user'
+        verbose_name_plural = 'Asana users'
 
 
 class Project(SyncStatusAbstract):
-    """ Проект Asana. """
-    name = models.CharField('наименование', max_length=255)
+    """Asana project."""
+    name = models.CharField('name', max_length=255)
     workspace = models.ForeignKey(Workspace, related_name='projects',
                                   on_delete=models.CASCADE, **nullable)
 
     def __str__(self):
-        return f'Проект {self.id} {self.name}'
+        return f'Project {self.id} {self.name}'
 
     class Meta:
-        verbose_name = 'Проект'
-        verbose_name_plural = 'Проекты'
+        verbose_name = 'Project'
+        verbose_name_plural = 'Projects'
 
 
 class Task(SyncStatusAbstract):
-    """ Задача проекта Asana. """
-    name = models.CharField('наименование', max_length=255)
+    """Asana project task."""
+    name = models.CharField('name', max_length=255)
     projects = models.ManyToManyField(Project, related_name='tasks',
                                       blank=True)
     notes = models.TextField('содержание', **nullable)
@@ -88,8 +88,8 @@ class Task(SyncStatusAbstract):
                                   on_delete=models.CASCADE, **nullable)
 
     def __str__(self):
-        return f'Задача {self.id} {self.name}'
+        return f'Task {self.id} {self.name}'
 
     class Meta:
-        verbose_name = 'Задача'
-        verbose_name_plural = 'Задачи'
+        verbose_name = 'Task'
+        verbose_name_plural = 'Tasks'

@@ -5,34 +5,35 @@ from django.dispatch import receiver
 from asana_crm import tasks
 from asana_crm.models import Project, Task
 
-# Здесь не хватает синхронизации проектов при изменении состава проектов у
-# задачи или состава задач программно без пересохранения задачи.
-# Чтобы это обработать необходимо перехватывать сигнал m2m_changed от sender-а
-# Task.projects.through.
 
-# Желательно также предусмотреть случаи, когда происходит пересохранение
-# объекта без его фактического изменения. В этом случае синхронизацию делать не
-# нужно.
-# Но для этого надо также учитывать, что при пересохранении может вызываться
-# метод Task.projects.set() или Project.tasks.set() вызывает сигналы с
-# action-ами pre_clear и post_add
-# Можно в action-ах pre_clear сохранять список текущих проектов у задачи,
-# или список задач у проекта в instance и затем, при получении сигнала с
-# action-м post_add, сравнивать старый и новый списки чтобы определить
-# изменилось ли что-либо.
+# There is a lack of project synchronization when changing the scope of
+# projects for a task or the scope of tasks programmatically without
+# re-saving the task.
+# To handle this, you need to intercept the m2m_changed signal from the
+# Task.projects.through sender.
+
+# It is also advisable to handle cases when an object is re-saved without
+# actually changing it. In this case, there is no need to do synchronization.
+# But it should also be borne in mind that when oversaving, the
+# Task.projects.set () or Project.tasks.set () methods can be called, which
+# call signals with the pre_clear and post_add actions
+# It is possible in the pre_clear actions to save the list of current
+# projects for the task, or the list of tasks for the project in the instance
+# and then, when receiving a signal from the post_add action, compare the old
+# and new lists to determine if anything has changed.
 
 @receiver(post_save, sender=Project, dispatch_uid='send_project_uid')
 def send_project(sender, instance, **kwargs):
-    """ При создании или редактировании проекта обновляем данные в Asana. """
-    # Мы ещё находимся в незавершённой транзакции. Поэтому, если мы задачу
-    # создадим напрямую, воркер её может подхватить раньше, чем произойдёт
-    # коммит. В этом случае мы можем отправить в Asana не актуальные данные,
-    # либо, если это новый проект, таска его может не найти вовсе.
-    # Чтобы это исключить используем on_commit.
+    """Update the data in Asana when creating or editing a project."""
+    # We are still in an uncompleted transaction. Therefore, if we create
+    # a task directly, the worker can pick it up before the commit occurs.
+    # In this case, we can send non-relevant data to Asana, or, if this is
+    # a new project, the task may not find it at all. To exclude this we
+    # use on_commit.
     transaction.on_commit(lambda: tasks.send_project.delay(instance.id))
 
 
 @receiver(post_save, sender=Task, dispatch_uid='send_task_uid')
 def send_task(sender, instance, **kwargs):
-    """ При создании или редактировании задачи обновляем данные в Asana. """
+    """Update the data in Asana when creating or editing a task."""
     transaction.on_commit(lambda: tasks.send_task.delay(instance.id))

@@ -3,15 +3,15 @@ build-django:
 
 build: build-django
 
-# Создаёт суперпользователя
+# Create superuser
 create-superuser:
 	docker-compose run django python manage.py create_admin
 
-# Запуск web-приложения
+# Start web-server
 runserver:
 	docker-compose up -d django
 
-# Запускает тесты
+# Run tests
 autotests:
 	docker-compose run --rm django /app/start-autotests.sh
 

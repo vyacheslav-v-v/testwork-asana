@@ -1,37 +1,36 @@
 Test task
 
-Технологический стек
---------------------
+Technology stack
+----------------
 
 Python 3, Django, DRF, celery, docker, PostgreSQL
 
-Запуск
-------
+Start
+---
 
 ~~~
 git clone https://github.com/vyacheslav-v-v/testwork-asana.git
-cd test-work
+cd testwork-asana
 ~~~
 
-Запуск тестов:
+Start tests:
 ~~~
 make autotests
 ~~~
-Создать суперпользователя с логином admin и паролем 123:
+Create superuser with login `admin` and password `123`:
 ~~~
 make create-superuser
 ~~~
-Запуск сервера Django:
+Start Django server:
 ~~~
 make runserver
 ~~~
-По умолчанию отвечает по адресу http://0.0.0.0:8100
+By default, replies at http://0.0.0.0:8100
 
-Админка
+Admin
 -
 http://0.0.0.0:8100/admin/
 
-Для работы необходимо в файле .env в корне проекта указать токен:
+Asana token should be specified in the .env file at the root of the project:
 
 `ASANA_ACCESS_TOKEN="Write your token here"`
- 

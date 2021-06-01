@@ -10,7 +10,7 @@ from asana_crm.models import Workspace, AsanaUser, Project, Task
 
 
 class GidRelatedField(RelatedField):
-    """ Поле, позволяющее устанавливать отношения между моделями по gid. """
+    """Field allows establishing relationships between models by gid."""
     default_error_messages = {
         'does_not_exist': 'Объект {value["gid"]} не существует.',
         'invalid': 'Неверное значение.',
@@ -29,7 +29,7 @@ class GidRelatedField(RelatedField):
 
 
 class WorkspaceSerializer(serializers.ModelSerializer):
-    """ Сериалайзер рабочих областей. """
+    """Workspace serializer."""
 
     class Meta:
         model = Workspace
@@ -37,7 +37,7 @@ class WorkspaceSerializer(serializers.ModelSerializer):
 
 
 class AsanaUserSerializer(serializers.ModelSerializer):
-    """ Сериалайзер пользователей Asana. """
+    """Asana user serializer."""
 
     class Meta:
         model = AsanaUser
@@ -54,7 +54,7 @@ class AsanaUserSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
-    """ Сериалайзер проектов Asana. """
+    """Asana project serializer."""
     workspace = GidRelatedField(queryset=Workspace.objects.all())
 
     class Meta:
@@ -63,7 +63,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
-    """ Сериалайзер задач Asana. """
+    """Asana task serializer."""
     projects = GidRelatedField(many=True, queryset=Project.objects.all())
     assignee = GidRelatedField(queryset=AsanaUser.objects.all(),
                                allow_null=True)

@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 @app.task(bind=True)
 def send_project(self, project_id):
-    """ Задача отправки проекта в Asana.
+    """The task of sending a project to Asana
 
-    Максимально упрощённо.
+    Simplified.
     """
     project = Project.objects.get(id=project_id)
     try:
@@ -29,7 +29,7 @@ def send_project(self, project_id):
 
 @app.task(bind=True)
 def send_task(self, task_id):
-    """ Задача отправки задачи в Asana. """
+    """The task of sending a task to Asana."""
     task = Task.objects.get(id=task_id)
     try:
         if not settings.TESTING:
@@ -43,7 +43,7 @@ def send_task(self, task_id):
 
 @app.task(bind=True)
 def sync_additional_objects(self):
-    """ Получаем пользователей и рабочие области. """
+    """Get users and workspaces."""
     if not settings.TESTING:
         client = AsanaApi()
         client.sync_users()

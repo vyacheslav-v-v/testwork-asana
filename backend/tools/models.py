@@ -1,2 +1,2 @@
-# shortcut для необязательных полей
+# shortcut for optional fields
 nullable = dict(blank=True, null=True)

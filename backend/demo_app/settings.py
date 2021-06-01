@@ -102,7 +102,7 @@ STATIC_URL = '/static/'
 
 ASANA_ACCESS_TOKEN = e('ASANA_ACCESS_TOKEN', None)
 
-# Настройки Celery
+# Celery settings
 CELERY_BROKER_URL = e('CELERY_BROKER_URL', 'amqp://guest:guest@rabbitmq/')
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_CACHE_BACKEND = 'django-cache'
@@ -119,12 +119,12 @@ CELERYD_PREFETCH_MULTIPLIER = 2
 CELERYD_MAX_TASKS_PER_CHILD = 1000
 CELERY_MAX_RETRIES_COUNT = 5
 
-# Настройки Celery-beat
+# Celery-beat settings
 MINUTE = 60.0
 HOUR = MINUTE * 60
 DAY = HOUR * 24
 
-# Интервал в секундах через который происходит синхронизация данных c Asana
+# The interval in seconds between data synchronization with Asana
 SYNC_ASANA_INTERVAL = 30
 
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

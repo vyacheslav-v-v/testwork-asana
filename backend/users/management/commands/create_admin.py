@@ -4,10 +4,10 @@ from users.models import User
 
 
 class Command(BaseCommand):
-    help = ("Создаёт суперпользователя с логином admin и паролем 123.")
+    help = ('Create superuser with username `admin` and password `123`.')
 
     def handle(self, **options):
-        """ Создаёт суперпользователя с логином admin и паролем 123. """
+        """Create superuser with username `admin` and password `123`."""
 
         User.objects.create_superuser(email='admin@example.com',
                                       username='admin',

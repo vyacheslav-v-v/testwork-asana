@@ -2,13 +2,13 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
-    """ Модель пользователя """
+    """User model."""
 
     def __str__(self):
         return self.get_full_name() + f' ({self.email})'
 
     def get_full_name(self):
-        """Возвращает ФО или email"""
+        """Return full name or email"""
         full_name = ' '.join(
             filter(None, (self.last_name, self.first_name))
         ).strip()
@@ -16,5 +16,5 @@ class User(AbstractUser):
         return full_name
 
     class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'

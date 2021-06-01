@@ -4,4 +4,4 @@
 .DS_Store
 ._.DS_Store
 settings_local.py
-/.env
+/env/

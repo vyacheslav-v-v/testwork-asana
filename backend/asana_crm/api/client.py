@@ -12,10 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class AsanaApi:
-    """ Класс для работы с API Asana.
+    """Class for working with the Asana API.
 
-    Здесь отсутствуют кастомные исключения, их нужно обязательно добавить и
-    использовать в реальном проекте.
+    Here are no custom exceptions. They should be added in a real project.
     """
     _client = None
     _workspace = None
@@ -24,22 +23,22 @@ class AsanaApi:
         AsanaApi._client = self._get_client()
 
     def get_default_workspace(self):
-        """ Берём первый попавшийся workspace.
+        """Get the first workspace.
 
-        Делаем просто чтобы работало.
+        Just so that works.
         """
         if not self._workspace:
             self._workspace = Workspace.objects.get(gid__isnull=False)
         return self._workspace
 
     def _get_client(self):
-        """ Получение клиента. """
+        """Get client."""
         return asana.Client.access_token(settings.ASANA_ACCESS_TOKEN)
 
     def sync_workspaces(self):
-        """ Синхронизация рабочих областей.
+        """Synchronize workspaces.
 
-        Только загружаем области.
+        Load workspaces only.
         """
         client = self._client
         workspaces = client.workspaces.find_all()
@@ -47,16 +46,12 @@ class AsanaApi:
             instance = Workspace.objects.filter(gid=workspace['gid']).first()
             ws_serializer = WorkspaceSerializer(instance=instance,
                                                 data=workspace)
-            # Здесь должен быть перехват исключения и вызов своего эксепшена.
+            # Exception catcher should be here and it must raise the custom exception..
             ws_serializer.is_valid(raise_exception=True)
             ws_serializer.save()
 
     def sync_users(self):
-        """ Синхронизация пользователей.
-
-        Очень плохо, код дублируется. Но этого в задании не требовалось,
-        поэтому оставляю как есть.
-        """
+        """Synchronize users."""
         client = self._client
         users = client.users.find_all(
             {'workspace': self.get_default_workspace().gid},
@@ -65,15 +60,15 @@ class AsanaApi:
             instance = Workspace.objects.filter(gid=user['gid']).first()
             user_serializer = AsanaUserSerializer(instance=instance,
                                                   data=user)
-            # Упрощаем, не обрабатываем ошибки.
+            # Simplifying, not handling errors.
             user_serializer.is_valid(raise_exception=True)
             user_serializer.save()
 
     def send_project(self, project):
-        """ Отправка проекта в Asana. """
+        """Send logs to Asana."""
         client = self._client
-        # Если в проекте не установлен синхронизированный workspace,
-        # устанавливаем workspace по умолчанию.
+        # If the project does not have a synchronized workspace installed,
+        # set the default workspace.
         if not project.workspace or not project.workspace.gid:
             project.workspace = self.get_default_workspace()
         data = ProjectSerializer(instance=project).data
@@ -81,54 +76,54 @@ class AsanaApi:
             client.projects.update(data['gid'], data)
         else:
             gid = client.projects.create(data)['gid']
-            # Сохраняем gid.
+            # Store gid.
             project.set_gid(gid)
 
     def send_task(self, task):
-        """ Отправка задачи в Asana.
+        """Send the task to Asana.
 
-        Здесь нужно выполнить проверку, что связанные объекты синхронизированы
-        и, если нет, либо их синхронизировать, либо запланировать повтор
-        задачи в расчёте что они синхронизируются в другом месте.
+        Here you need to check that the related objects are synchronized and,
+        if not, either synchronize them, or schedule a repeat of the task in
+        the expectation that they will be synchronized elsewhere.
         """
         client = self._client
         data = TaskSerializer(instance=task).data
-        # Если задача уже синхронизировалась - обновляем
+        # If the task has already been synchronized then refresh
         if task.gid:
-            # Убираем проекты из запроса проекты, asana не позволяет установить
-            # их напрямую
+            # We remove projects from the request, asana does not allow you
+            # to set them directly
             data.pop('projects')
             new_data = client.tasks.update(task.gid, data)
             self.sync_task_groups(task, new_data)
         else:
-            # Если это новая задача - создаём на сервере в основном рабочем
-            # пространстве.
+            # If this is a new task then create it at the default workspace
+            # on the server.
             data['workspace'] = self.get_default_workspace().gid
             gid = client.tasks.create(data)['gid']
             # Сохраняем gid.
             task.set_gid(gid)
 
     def sync_task_groups(self, task: Task, remote_data: dict = None):
-        """ Синхронизация проектов задачи. """
+        """Synchronize task projects."""
         remote_data = remote_data or self._get_task_data(task.gid)
         l_projects = set(task.projects.values_list('gid', flat=True))
         r_projects = {p['gid'] for p in remote_data['projects']}
 
-        # Добавляем отсутствующие в asana проекты.
+        # Add missing projects to asana.
         for project_gid in l_projects - r_projects:
             self._client.tasks.add_project(task.gid, {'project': project_gid})
 
-        # Удаляем проекты, присутствующие в Asana, но отсутствующие у нас.
+        # We delete projects that are present in Asana, but we do not have.
         for project_gid in r_projects - l_projects:
             self._client.tasks.remove_project(task.gid,
                                               {'project': project_gid})
 
     def _get_task_data(self, gid) -> dict:
-        """ Получаем данные задачи с сервера."""
+        """Get task data from the server."""
         return self._client.tasks.find_by_id(gid)
 
     def delete_all_projects(self):
-        """ Удаляем все проекты. """
+        """Remove all projects."""
         client = self._client
         workspaces = client.workspaces.find_all()
         for workspace in workspaces:
